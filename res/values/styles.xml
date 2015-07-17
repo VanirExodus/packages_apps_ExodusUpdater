@@ -22,5 +22,5 @@
 
     <style name="Theme.ActionBar.SubSettings" parent="@android:style/Widget.Material.Light.ActionBar.Solid">
         <item name="android:contentInsetStart">@dimen/actionbar_subsettings_contentInsetStart</item>
-	</style>
+    </style>
 </resources>

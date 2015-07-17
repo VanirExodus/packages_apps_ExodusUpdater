@@ -17,7 +17,6 @@
 package com.exodus.updater;
 
 import android.app.Activity;
-import android.app.AlertDialog;
 import android.app.KeyguardManager;
 import android.content.Context;
 import android.content.DialogInterface;
@@ -29,6 +28,7 @@ import android.os.Bundle;
 import android.os.PowerManager;
 import android.view.Window;
 import android.view.WindowManager;
+import android.widget.Toast;
 
 /*
  * Activity to show alert dialogs on keyguard
@@ -46,24 +46,9 @@ public class GappsCheckerActivity extends Activity {
                     PowerManager.ACQUIRE_CAUSES_WAKEUP | PowerManager.FULL_WAKE_LOCK, "com.exodus.updater");
             wl.acquire();
 
-            AlertDialog.Builder builder = new AlertDialog.Builder(this);
-            builder.setTitle(R.string.app_name);
-            builder.setMessage(R.string.gapps_not_installed);
-            builder.setPositiveButton(R.string.dialog_ok,
-                    new DialogInterface.OnClickListener() {
-                        @Override
-                        public void onClick(DialogInterface dialog, int which) {
-                            wl.release();
-                            finish();
-                        }
-                    });
-            AlertDialog dialog = builder.create();
-            dialog.getWindow().addFlags(WindowManager.LayoutParams.FLAG_TURN_SCREEN_ON
-                | WindowManager.LayoutParams.FLAG_SHOW_WHEN_LOCKED
-                | WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON
-                | WindowManager.LayoutParams.FLAG_DISMISS_KEYGUARD);
-            dialog.getWindow().setType(WindowManager.LayoutParams.TYPE_SYSTEM_ALERT);
-            dialog.show();
+            Toast.makeText(GappsCheckerActivity.this,
+                    GappsCheckerActivity.this.getString(R.string.gapps_not_installed), Toast.LENGTH_LONG).show();
+            finish();
         } else {
             finish();
         }
