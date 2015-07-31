@@ -395,7 +395,10 @@ public class UpdatesSettings extends PreferenceActivity implements
                     progressBar.setProgress(downloadedBytes);
                     break;
                 case DownloadManager.STATUS_FAILED:
-                    mDownloadingPreference.setStyle(UpdatePreference.STYLE_NEW);
+                    if (mDownloadingPreference.getDependency() == LATEST_CATEGORY)
+                        mDownloadingPreference.setStyle(UpdatePreference.STYLE_NEW);
+                    else
+                        mDownloadingPreference.setStyle(UpdatePreference.STYLE_OLD);
                     resetDownloadState();
                     break;
             }
@@ -412,7 +415,10 @@ public class UpdatesSettings extends PreferenceActivity implements
     @Override
     public void onStopDownload(final UpdatePreference pref) {
         if (!mDownloading || mFileName == null || mDownloadId < 0) {
-            pref.setStyle(UpdatePreference.STYLE_NEW);
+            if (pref.getDependency() == LATEST_CATEGORY)
+                pref.setStyle(UpdatePreference.STYLE_NEW);
+            else
+                pref.setStyle(UpdatePreference.STYLE_OLD);
             resetDownloadState();
             return;
         }
@@ -424,7 +430,10 @@ public class UpdatesSettings extends PreferenceActivity implements
                     @Override
                     public void onClick(DialogInterface dialog, int which) {
                         // Set the preference back to new style
-                        pref.setStyle(UpdatePreference.STYLE_NEW);
+                        if (pref.getDependency() == LATEST_CATEGORY)
+                            pref.setStyle(UpdatePreference.STYLE_NEW);
+                        else
+                            pref.setStyle(UpdatePreference.STYLE_OLD);
 
                         // We are OK to stop download, trigger it
                         mDownloadManager.remove(mDownloadId);
@@ -545,13 +554,17 @@ public class UpdatesSettings extends PreferenceActivity implements
         // Build list of updates
         LinkedList<UpdateInfo> availableUpdates = State.loadState(this);
         final LinkedList<UpdateInfo> updates = new LinkedList<UpdateInfo>();
+        String installedZip = "exodus-" + Utils.getInstalledVersion() + ".zip";
+        int versions = 0;
 
         for (String fileName : existingFiles) {
             updates.add(new UpdateInfo(fileName));
         }
         for (UpdateInfo update : availableUpdates) {
             // Only add updates to the list that are not already downloaded
-            if (existingFiles.contains(update.getFileName())) {
+            versions++;
+            if (existingFiles.contains(update.getFileName()) ||
+                    (!update.getFileName().equals(installedZip) && versions > 14)) {
                 continue;
             }
             updates.add(update);
@@ -609,9 +622,10 @@ public class UpdatesSettings extends PreferenceActivity implements
         mLatestList.removeAll();
 
         // Convert the installed version name to the associated filename
-        String installedZip = "exodus_" + Utils.getInstalledVersion() + ".zip";
+        String installedZip = "exodus-" + Utils.getInstalledVersion() + ".zip";
 
         boolean isFirstDownload = true;
+        boolean newerThanCurrent = true;
 
         // Add the updates
         for (UpdateInfo ui : updates) {
@@ -625,8 +639,12 @@ public class UpdatesSettings extends PreferenceActivity implements
             } else if (ui.getFileName().equals(installedZip)) {
                 // This is the currently installed version
                 style = UpdatePreference.STYLE_INSTALLED;
+                newerThanCurrent = false;
             } else if (ui.getDownloadUrl() != null) {
-                style = UpdatePreference.STYLE_NEW;
+                if (newerThanCurrent)
+                    style = UpdatePreference.STYLE_NEW;
+                else
+                    style = UpdatePreference.STYLE_OLD;
             } else {
                 style = UpdatePreference.STYLE_DOWNLOADED;
             }
@@ -643,10 +661,12 @@ public class UpdatesSettings extends PreferenceActivity implements
             }
             if(isFirstDownload){
                 mLatestList.addPreference(up);
+                up.setDependency(LATEST_CATEGORY);
                 isFirstDownload = false;
             } else {
                 // Add to the list
                 mUpdatesList.addPreference(up);
+                up.setDependency(UPDATES_CATEGORY);
             }
         }
 
